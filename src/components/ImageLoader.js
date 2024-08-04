@@ -1,7 +1,15 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
 
-const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }) => {
+const ImageLoader = ({ 
+  src, 
+  alt, 
+  preload = false, 
+  objectFit = 'cover', 
+  width = '100%', 
+  height = 'auto', 
+  onPreloadComplete = () => {} 
+}) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPreloaded, setIsPreloaded] = useState(false);
@@ -18,21 +26,18 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
   const observerRef = useRef(null);
 
   useEffect(() => {
-    // Initialize state variables
     determineDeviceType();
     determinePixelDensity();
     determineConnectionType();
     checkImageFormatSupport();
     selectPlaceholder();
 
-    // Setup IntersectionObserver
     if ('IntersectionObserver' in window) {
       setupIntersectionObserver();
     } else {
       loadIntersectionObserverPolyfill().then(setupIntersectionObserver);
     }
 
-    // Setup resize event listener
     window.addEventListener('resize', handleResize);
 
     return () => {
@@ -50,10 +55,7 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
   }, [preload, src]);
 
   const loadIntersectionObserverPolyfill = async () => {
-    if ('IntersectionObserver' in window) {
-      return; // Polyfill not needed
-    }
-
+    if ('IntersectionObserver' in window) return;
     try {
       const script = document.createElement('script');
       script.src = 'https://polyfill.io/v3/polyfill.min.js?features=IntersectionObserver';
@@ -70,12 +72,8 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
   };
 
   const loadWebPPolyfill = async () => {
-    if (window.WebPDecoder) {
-      return; // Polyfill already loaded
-    }
-
+    if (window.WebPDecoder) return;
     try {
-      // Load webp-hero script
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/webp-hero@0.0.2/dist-cjs/polyfills.js';
       script.async = true;
@@ -84,14 +82,10 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
         script.onerror = reject;
         document.head.appendChild(script);
       });
-
-      // Initialize WebP decoder
       const webpHero = await import('https://unpkg.com/webp-hero@0.0.2/dist-cjs/webp-hero.bundle.js');
       const decoder = new webpHero.WebpMachine();
       await decoder.polyfillDocument();
-
       console.log('WebP polyfill loaded');
-      // Re-check image format support after loading polyfill
       checkImageFormatSupport();
     } catch (error) {
       console.error('Failed to load WebP polyfill:', error);
@@ -114,6 +108,7 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
 
   const checkImageFormatSupport = () => {
     const formats = [];
+    
     const testWebP = new Image();
     testWebP.onload = () => {
       if (testWebP.width > 0 && testWebP.height > 0) {
@@ -121,19 +116,30 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
       } else {
         loadWebPPolyfill();
       }
-      setSupportedFormats(formats);
+      checkAVIFSupport(formats);
     };
     testWebP.onerror = () => {
       loadWebPPolyfill();
-      setSupportedFormats(formats);
+      checkAVIFSupport(formats);
     };
     testWebP.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
-    
-    // Similar checks can be added for AVIF and other formats
+  };
+
+  const checkAVIFSupport = (formats) => {
+    const testAVIF = new Image();
+    testAVIF.onload = () => {
+      if (testAVIF.width > 0 && testAVIF.height > 0) {
+        formats.push('avif');
+      }
+      setSupportedFormats(formats);
+    };
+    testAVIF.onerror = () => {
+      setSupportedFormats(formats);
+    };
+    testAVIF.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A=';
   };
 
   const selectPlaceholder = () => {
-    // Logic to select appropriate placeholder based on device type and connection
     setPlaceholder('/assets/images/placeholder.jpg');
   };
 
@@ -166,13 +172,11 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
 
   const loadImage = () => {
     if (isScrollingFast()) {
-      setTimeout(loadImage, 300); // Defer loading
+      setTimeout(loadImage, 300);
       return;
     }
 
-    if (isLoading) {
-      return; // Don't start a new load if one is in progress
-    }
+    if (isLoading) return;
 
     setIsLoading(true);
     const imgSrc = determineImageSource();
@@ -197,19 +201,21 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
     let imageSrc = src;
     
     if (deviceType === 'mobile') {
-      imageSrc = imageSrc.replace('.jpg', '-mobile.jpg');
+      imageSrc = imageSrc.replace(/\.(jpg|png)$/, '-mobile.$1');
     } else if (pixelDensity >= 3) {
-      imageSrc = imageSrc.replace('.jpg', '-3x.jpg');
+      imageSrc = imageSrc.replace(/\.(jpg|png)$/, '-3x.$1');
     } else if (pixelDensity >= 2) {
-      imageSrc = imageSrc.replace('.jpg', '-2x.jpg');
+      imageSrc = imageSrc.replace(/\.(jpg|png)$/, '-2x.$1');
     }
 
-    if (supportedFormats.includes('webp')) {
+    if (supportedFormats.includes('avif')) {
+      imageSrc = imageSrc.replace(/\.(jpg|png|webp)$/, '.avif');
+    } else if (supportedFormats.includes('webp')) {
       imageSrc = imageSrc.replace(/\.(jpg|png)$/, '.webp');
     }
 
     if (connectionType === '2g' || connectionType === '3g') {
-      imageSrc = imageSrc.replace(/\.(jpg|png|webp)$/, '-low.$1');
+      imageSrc = imageSrc.replace(/\.(jpg|png|webp|avif)$/, '-low.$1');
     }
 
     return imageSrc;
@@ -219,7 +225,7 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
     setIsLoading(false);
     if (retryCount < 3) {
       setRetryCount(retryCount + 1);
-      setTimeout(loadImage, Math.pow(2, retryCount) * 1000); // Exponential backoff
+      setTimeout(loadImage, Math.pow(2, retryCount) * 1000);
     } else {
       setError('Failed to load image');
     }
@@ -244,12 +250,16 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
   };
 
   return (
-    <div className={`image-loader-container ${isLoading ? 'skeleton' : ''}`}>
+    <div 
+      className={`image-loader-container ${isLoading ? 'skeleton' : ''}`}
+      style={{ width, height }}
+    >
       {!isLoaded && placeholder && (
         <img 
           src={placeholder} 
           alt="Loading placeholder" 
           className="image-loader-placeholder blur-up"
+          style={{ objectFit }}
         />
       )}
       {isLoading && <div className="loading-indicator" />}
@@ -259,6 +269,7 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
         src={isLoaded ? currentSrc : placeholder}
         alt={alt}
         className={`image-loader-img ${isLoaded ? 'loaded lazyloaded' : ''}`}
+        style={{ objectFit }}
         onLoad={() => {
           if (imgRef.current) {
             imgRef.current.classList.remove('blur-up');
