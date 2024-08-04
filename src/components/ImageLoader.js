@@ -18,18 +18,21 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
   const observerRef = useRef(null);
 
   useEffect(() => {
+    // Initialize state variables
     determineDeviceType();
     determinePixelDensity();
     determineConnectionType();
     checkImageFormatSupport();
     selectPlaceholder();
 
+    // Setup IntersectionObserver
     if ('IntersectionObserver' in window) {
       setupIntersectionObserver();
     } else {
       loadIntersectionObserverPolyfill().then(setupIntersectionObserver);
     }
 
+    // Setup resize event listener
     window.addEventListener('resize', handleResize);
 
     return () => {
@@ -47,7 +50,10 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
   }, [preload, src]);
 
   const loadIntersectionObserverPolyfill = async () => {
-    if ('IntersectionObserver' in window) return;
+    if ('IntersectionObserver' in window) {
+      return; // Polyfill not needed
+    }
+
     try {
       const script = document.createElement('script');
       script.src = 'https://polyfill.io/v3/polyfill.min.js?features=IntersectionObserver';
@@ -64,8 +70,12 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
   };
 
   const loadWebPPolyfill = async () => {
-    if (window.WebPDecoder) return;
+    if (window.WebPDecoder) {
+      return; // Polyfill already loaded
+    }
+
     try {
+      // Load webp-hero script
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/webp-hero@0.0.2/dist-cjs/polyfills.js';
       script.async = true;
@@ -74,10 +84,14 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
         script.onerror = reject;
         document.head.appendChild(script);
       });
+
+      // Initialize WebP decoder
       const webpHero = await import('https://unpkg.com/webp-hero@0.0.2/dist-cjs/webp-hero.bundle.js');
       const decoder = new webpHero.WebpMachine();
       await decoder.polyfillDocument();
+
       console.log('WebP polyfill loaded');
+      // Re-check image format support after loading polyfill
       checkImageFormatSupport();
     } catch (error) {
       console.error('Failed to load WebP polyfill:', error);
@@ -114,9 +128,12 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
       setSupportedFormats(formats);
     };
     testWebP.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+    
+    // Similar checks can be added for AVIF and other formats
   };
 
   const selectPlaceholder = () => {
+    // Logic to select appropriate placeholder based on device type and connection
     setPlaceholder('/assets/images/placeholder.jpg');
   };
 
@@ -149,11 +166,13 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
 
   const loadImage = () => {
     if (isScrollingFast()) {
-      setTimeout(loadImage, 300);
+      setTimeout(loadImage, 300); // Defer loading
       return;
     }
 
-    if (isLoading) return;
+    if (isLoading) {
+      return; // Don't start a new load if one is in progress
+    }
 
     setIsLoading(true);
     const imgSrc = determineImageSource();
@@ -200,13 +219,14 @@ const ImageLoader = ({ src, alt, preload = false, onPreloadComplete = () => {} }
     setIsLoading(false);
     if (retryCount < 3) {
       setRetryCount(retryCount + 1);
-      setTimeout(loadImage, Math.pow(2, retryCount) * 1000);
+      setTimeout(loadImage, Math.pow(2, retryCount) * 1000); // Exponential backoff
     } else {
       setError('Failed to load image');
     }
   };
 
   const isScrollingFast = () => {
+    // Implement logic to determine if scrolling is fast
     return false;
   };
 
