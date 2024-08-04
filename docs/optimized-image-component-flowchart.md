@@ -67,8 +67,8 @@ graph TD
     BD --> BG
     BE --> BG
     BF --> BG
-    BG -->|AVIF Supported| BH[Use AVIF]
-    BG -->|WebP Supported| BI[Use WebP]
+    BG -->|WebP Supported| BH[Use WebP]
+    BG -->|AVIF Supported| BI[Use AVIF]
     BG -->|Other| BJ[Use JPG/PNG]
     BH --> BK{Check Connection Type}
     BI --> BK
