@@ -14,46 +14,50 @@ graph TD
     K -->|Yes| L[Add WebP to Supported Formats]
     K -->|No| M[Load WebP Polyfill]
     M --> N[Re-check WebP Support]
-    L --> O[Select Placeholder]
+    L --> O{AVIF Supported?}
     N --> O
-    O --> P{Preload Prop True?}
-    P -->|Yes| Q[Determine Image Source]
-    P -->|No| R[Wait for Intersection]
-    Q --> S[Preload Image]
-    S --> T{Preload Successful?}
-    T -->|Yes| U[Set isPreloaded to True]
-    T -->|No| V[Log Preload Error]
-    U --> W[Execute onPreloadComplete Callback]
-    V --> R
-    W --> R
-    R --> X{Is Intersecting?}
-    X -->|Yes| Y{Is Scrolling Fast?}
-    Y -->|No| Z[Load Image]
-    Y -->|Yes| AA[Defer Loading]
-    AA --> AB[Wait for Scroll to End]
-    AB --> Z
-    Z --> AC{Image Loaded Successfully?}
-    AC -->|Yes| AD[Display Image]
-    AC -->|No| AE{Retry Count < Max?}
-    AE -->|Yes| AF[Increment Retry Count]
-    AF --> AG[Wait with Exponential Backoff]
-    AG --> Z
-    AE -->|No| AH[Display Error Message]
-    X -->|No| R
+    O -->|Yes| P[Add AVIF to Supported Formats]
+    O -->|No| Q[Skip AVIF]
+    P --> R[Select Placeholder]
+    Q --> R
+    R --> S{Preload Prop True?}
+    S -->|Yes| T[Determine Image Source]
+    S -->|No| U[Wait for Intersection]
+    T --> V[Preload Image]
+    V --> W{Preload Successful?}
+    W -->|Yes| X[Set isPreloaded to True]
+    W -->|No| Y[Log Preload Error]
+    X --> Z[Execute onPreloadComplete Callback]
+    Y --> U
+    Z --> U
+    U --> AA{Is Intersecting?}
+    AA -->|Yes| AB{Is Scrolling Fast?}
+    AB -->|No| AC[Load Image]
+    AB -->|Yes| AD[Defer Loading]
+    AD --> AE[Wait for Scroll to End]
+    AE --> AC
+    AC --> AF{Image Loaded Successfully?}
+    AF -->|Yes| AG[Display Image]
+    AF -->|No| AH{Retry Count < Max?}
+    AH -->|Yes| AI[Increment Retry Count]
+    AI --> AJ[Wait with Exponential Backoff]
+    AJ --> AC
+    AH -->|No| AK[Display Error Message]
+    AA -->|No| U
 
-    AI[Setup Resize Event Listener] --> AJ{Window Resized?}
-    AJ -->|Yes| AK[Re-determine Device Type]
-    AK --> AL[Re-determine Pixel Density]
-    AL --> AM{Device Type or Pixel Density Changed?}
-    AM -->|Yes| AN{Is Image Currently Loading?}
-    AN -->|No| Z
-    AN -->|Yes| AO[Wait for Current Load to Finish]
-    AO --> Z
-    AM -->|No| AJ
-    AJ -->|No| AJ
+    AL[Setup Resize Event Listener] --> AM{Window Resized?}
+    AM -->|Yes| AN[Re-determine Device Type]
+    AN --> AO[Re-determine Pixel Density]
+    AO --> AP{Device Type or Pixel Density Changed?}
+    AP -->|Yes| AQ{Is Image Currently Loading?}
+    AQ -->|No| AC
+    AQ -->|Yes| AR[Wait for Current Load to Finish]
+    AR --> AC
+    AP -->|No| AM
+    AM -->|No| AM
 
     subgraph Image Loading Process
-    Z --> BA{Check Device Type}
+    AC --> BA{Check Device Type}
     BA -->|Mobile| BB[Use Mobile Image]
     BA -->|Desktop| BC{Check Pixel Density}
     BC -->|High| BD[Use 2x Image]
@@ -63,20 +67,23 @@ graph TD
     BD --> BG
     BE --> BG
     BF --> BG
-    BG -->|WebP Supported| BH[Use WebP]
-    BG -->|WebP Not Supported| BI[Use JPG/PNG]
-    BH --> BJ{Check Connection Type}
-    BI --> BJ
-    BJ -->|3G/2G| BK[Use Low Quality Image]
-    BJ -->|Other| BL[Use Selected Image]
-    BK --> BM[Fetch Image]
-    BL --> BM
+    BG -->|AVIF Supported| BH[Use AVIF]
+    BG -->|WebP Supported| BI[Use WebP]
+    BG -->|Other| BJ[Use JPG/PNG]
+    BH --> BK{Check Connection Type}
+    BI --> BK
+    BJ --> BK
+    BK -->|3G/2G| BL[Use Low Quality Image]
+    BK -->|Other| BM[Use Selected Image]
+    BL --> BN[Fetch Image]
+    BM --> BN
     end
 
     subgraph Visual Feedback
-    BN[Apply Skeleton Loading]
-    BO[Show Loading Indicator]
-    BP[Apply Blur-up Effect]
-    BQ[Fade-in Loaded Image]
+    BO[Apply Skeleton Loading]
+    BP[Show Loading Indicator]
+    BQ[Apply Blur-up Effect]
+    BR[Fade-in Loaded Image]
+    BS[Apply object-fit Style]
     end
 ```
