@@ -1,0 +1,1 @@
+# optimized-image-component-blueprint
