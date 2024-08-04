@@ -1,5 +1,5 @@
 ```mermaid
-    graph TD
+graph TD
     A[Component Mounted] --> B[Initialize State Variables]
     B --> C[Run Initial Effect Hook]
     C --> D{Check for IntersectionObserver}
