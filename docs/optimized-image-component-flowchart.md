@@ -5,59 +5,63 @@ graph TD
     C --> D{Check for IntersectionObserver}
     D -->|Available| E[Setup IntersectionObserver]
     D -->|Not Available| F[Load IntersectionObserver Polyfill]
-    F --> E
-    E --> G[Determine Device Type]
-    G --> H[Determine Pixel Density]
-    H --> I[Determine Connection Type]
-    I --> J[Check Image Format Support]
-    J --> K{WebP Supported?}
-    K -->|Yes| L[Add WebP to Supported Formats]
-    K -->|No| M[Load WebP Polyfill]
-    M --> N[Re-check WebP Support]
-    L --> O{AVIF Supported?}
-    N --> O
-    O -->|Yes| P[Add AVIF to Supported Formats]
-    O -->|No| Q[Skip AVIF]
-    P --> R[Select Placeholder]
+    F --> G{Polyfill Loaded Successfully?}
+    G -->|Yes| E
+    G -->|No| H[Disable Lazy Loading]
+    H --> I[Load All Images Immediately]
+    E --> J[Determine Device Type]
+    I --> J
+    J --> K[Determine Pixel Density]
+    K --> L[Determine Connection Type]
+    L --> M[Check Image Format Support]
+    M --> N{WebP Supported?}
+    N -->|Yes| O[Add WebP to Supported Formats]
+    N -->|No| P[Load WebP Polyfill]
+    P --> Q[Re-check WebP Support]
+    O --> R{AVIF Supported?}
     Q --> R
-    R --> S{Preload Prop True?}
-    S -->|Yes| T[Determine Image Source]
-    S -->|No| U[Wait for Intersection]
-    T --> V[Preload Image]
-    V --> W{Preload Successful?}
-    W -->|Yes| X[Set isPreloaded to True]
-    W -->|No| Y[Log Preload Error]
-    X --> Z[Execute onPreloadComplete Callback]
-    Y --> U
-    Z --> U
-    U --> AA{Is Intersecting?}
-    AA -->|Yes| AB{Is Scrolling Fast?}
-    AB -->|No| AC[Load Image]
-    AB -->|Yes| AD[Defer Loading]
-    AD --> AE[Wait for Scroll to End]
-    AE --> AC
-    AC --> AF{Image Loaded Successfully?}
-    AF -->|Yes| AG[Display Image]
-    AF -->|No| AH{Retry Count < Max?}
-    AH -->|Yes| AI[Increment Retry Count]
-    AI --> AJ[Wait with Exponential Backoff]
-    AJ --> AC
-    AH -->|No| AK[Display Error Message]
-    AA -->|No| U
+    R -->|Yes| S[Add AVIF to Supported Formats]
+    R -->|No| T[Skip AVIF]
+    S --> U[Select Placeholder]
+    T --> U
+    U --> V{Preload Prop True?}
+    V -->|Yes| W[Determine Image Source]
+    V -->|No| X[Wait for Intersection]
+    W --> Y[Preload Image]
+    Y --> Z{Preload Successful?}
+    Z -->|Yes| AA[Set isPreloaded to True]
+    Z -->|No| AB[Log Preload Error]
+    AA --> AC[Execute onPreloadComplete Callback]
+    AB --> X
+    AC --> X
+    X --> AD{Is Intersecting?}
+    AD -->|Yes| AE{Is Scrolling Fast?}
+    AE -->|No| AF[Load Image]
+    AE -->|Yes| AG[Defer Loading]
+    AG --> AH[Wait for Scroll to End]
+    AH --> AF
+    AF --> AI{Image Loaded Successfully?}
+    AI -->|Yes| AJ[Display Image]
+    AI -->|No| AK{Retry Count < Max?}
+    AK -->|Yes| AL[Increment Retry Count]
+    AL --> AM[Wait with Exponential Backoff]
+    AM --> AF
+    AK -->|No| AN[Display Error Message]
+    AD -->|No| X
 
-    AL[Setup Resize Event Listener] --> AM{Window Resized?}
-    AM -->|Yes| AN[Re-determine Device Type]
-    AN --> AO[Re-determine Pixel Density]
-    AO --> AP{Device Type or Pixel Density Changed?}
-    AP -->|Yes| AQ{Is Image Currently Loading?}
-    AQ -->|No| AC
-    AQ -->|Yes| AR[Wait for Current Load to Finish]
-    AR --> AC
-    AP -->|No| AM
-    AM -->|No| AM
+    AO[Setup Resize Event Listener] --> AP{Window Resized?}
+    AP -->|Yes| AQ[Re-determine Device Type]
+    AQ --> AR[Re-determine Pixel Density]
+    AR --> AS{Device Type or Pixel Density Changed?}
+    AS -->|Yes| AT{Is Image Currently Loading?}
+    AT -->|No| AF
+    AT -->|Yes| AU[Wait for Current Load to Finish]
+    AU --> AF
+    AS -->|No| AP
+    AP -->|No| AP
 
     subgraph Image Loading Process
-    AC --> BA{Check Device Type}
+    AF --> BA{Check Device Type}
     BA -->|Mobile| BB[Use Mobile Image]
     BA -->|Desktop| BC{Check Pixel Density}
     BC -->|High| BD[Use 2x Image]
