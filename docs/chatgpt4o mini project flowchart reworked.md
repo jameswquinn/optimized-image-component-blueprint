@@ -1,41 +1,48 @@
 ```mermaid
-digraph ImageLoaderFlowchart {
-    node [shape=box, style=rounded];
-    
-    // Nodes
-    Start [label="Start" shape=circle];
-    DetermineDeviceDetails [label="Determine Device Type & Pixel Density"];
-    CheckIntersectionObserver [label="Check IntersectionObserver Support"];
-    LoadPolyfill [label="Load IntersectionObserver Polyfill"];
-    SetupObserver [label="Setup IntersectionObserver"];
-    LoadImage [label="Load Image"];
-    PreloadImage [label="Preload Image"];
-    DetermineImageSource [label="Determine Image Source"];
-    HandleLoadError [label="Handle Load Error"];
-    Retry [label="Retry"];
-    Error [label="Show Error"];
-    End [label="End" shape=circle];
-    
-    // Edges
-    Start -> DetermineDeviceDetails;
-    DetermineDeviceDetails -> CheckIntersectionObserver;
-    
-    CheckIntersectionObserver -> SetupObserver [label="IntersectionObserver Supported"];
-    CheckIntersectionObserver -> LoadPolyfill [label="No IntersectionObserver"];
-    LoadPolyfill -> SetupObserver;
-    
-    SetupObserver -> LoadImage [label="IntersectionObserver Setup"];
-    LoadImage -> PreloadImage [label="Preload Image if needed"];
-    PreloadImage -> DetermineImageSource;
-    DetermineImageSource -> LoadImage;
-    
-    LoadImage -> HandleLoadError [label="On Error"];
-    HandleLoadError -> Retry [label="Retry Count < 3"];
-    Retry -> LoadImage [label="Retry"];
-    HandleLoadError -> Error [label="Retry Count >= 3"];
-    
-    Error -> End;
-    PreloadImage -> End;
-}
+graph TD;
+  A[Start] --> B[Initialize State]
+  B --> C[Use Effect Hook (on mount)]
+  C --> D{Check IntersectionObserver Support}
+  D --> |Yes| E[Setup IntersectionObserver]
+  D --> |No| F[Load Polyfill]
+  F --> G{Polyfill Load Success?}
+  G --> |Yes| E
+  G --> |No| H[Disable Lazy Loading] --> I[Load Image]
+  E --> J[Setup Resize Event Listener]
+  J --> K[Setup Connection Change Listener (if supported)]
+  K --> L[Use Effect Hook (on `preload` or `src` change)]
+  L --> M{Preload Image?}
+  M --> |Yes| N[Call `preloadImage`]
+  M --> |No| O[Skip Preload]
+  N --> P[Create Image Object]
+  P --> Q{Image Load Success?}
+  Q --> |Yes| R[Set `isPreloaded` to true] --> S[Call `onPreloadComplete`]
+  Q --> |No| T[Log Preload Failure]
+  E --> U[Load Image]
+  U --> V{Is Scrolling Fast?}
+  V --> |Yes| W[Defer Image Load]
+  V --> |No| X{Check if Already Loading}
+  X --> |Yes| Y[Do Nothing]
+  X --> |No| Z[Start Image Load]
+  Z --> AA[Determine Image Source]
+  AA --> AB[Create Image Object]
+  AB --> AC{Image Load Success?}
+  AC --> |Yes| AD[Set `isLoaded` to true] --> AE[Update States] --> AF[Remove Blur]
+  AC --> |No| AG[Handle Load Error]
+  AG --> AH{Retry Count < 3?}
+  AH --> |Yes| AI[Increment Retry Count] --> AJ[Retry Image Load]
+  AH --> |No| AK[Set Error State]
+  J --> AL[Handle Resize Event]
+  AL --> AM[Update Device Type and Pixel Density]
+  AM --> AN{Reload Image if Necessary}
+  AN --> AO[Render]
+  AO --> AP[Display Placeholder if Not Loaded]
+  AO --> AQ[Show Loading Indicator if Loading]
+  AO --> AR[Show Error Message if Error]
+  AO --> AS[Display Image]
+  AP --> AT[End]
+  AQ --> AT
+  AR --> AT
+  AS --> AT
 
 ```
