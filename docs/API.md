@@ -56,12 +56,12 @@ The component automatically selects the most appropriate image based on:
 
 Supports modern image formats for better compression and quality:
 - WebP: Automatically used if the browser supports it.
-- AVIF: Used as the first choice if the browser supports it, falling back to WebP or JPEG/PNG.
+- AVIF: Used as the second choice if the browser supports it, falling back to WebP or JPEG/PNG.
 
 ### 4. Polyfills
 
 - Intersection Observer: Automatically loads a polyfill if the browser doesn't support it.
-- WebP: Dynamically loads a WebP polyfill for browsers that don't natively support it.
+- WebP: Checks for WebP support and falls back to other formats if not supported.
 
 ### 5. Visual Feedback
 
@@ -88,7 +88,7 @@ Provides various visual cues during the loading process:
 
 ## Browser Support
 
-The ImageLoader component supports all modern browsers. For older browsers, it includes polyfills for key features like Intersection Observer and WebP support.
+The ImageLoader component supports all modern browsers. For older browsers, it includes polyfills for key features like Intersection Observer and falls back gracefully if advanced features are not supported.
 
 ## Performance Considerations
 
